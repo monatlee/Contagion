@@ -2,6 +2,7 @@
 #define ACTOR_H_
 
 #include "GraphObject.h"
+#include <cmath>
 
 class StudentWorld;
 
@@ -20,6 +21,12 @@ public:
     
     // getter of pointer to the world
     StudentWorld* getMyWorld() {return m_world;};
+    
+    // check for overlap (must be overridden for bacteria)
+    bool overlap(Actor& other);
+    
+    // check if can overlap in init (set default to false)
+    bool canOverlapPlace() {return false; };
 
     // each actor must be able to tell if they are destructible and what they can block
     virtual bool isDestructible() = 0;
@@ -57,6 +64,7 @@ class PassiveActor : public Actor
 public:
     PassiveActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world) : Actor (imageID, startX, startY, dir, depth, world) {};
     virtual void doSomething() {return;};
+    
 };
 
 // ------- DIRT CLASS ------------ //
@@ -65,9 +73,11 @@ class Dirt : public PassiveActor
 public:
     Dirt(double startX, double startY, StudentWorld* world) : PassiveActor(IID_DIRT, startX, startY, 90, 1, world) {};
     
-    bool isDestructible() {return true;};
-    bool canBlockBacteria() {return true;};
-    bool canBlockProjectiles() {return true;};
+    virtual bool isDestructible() {return true;};
+    virtual bool canBlockBacteria() {return true;};
+    virtual bool canBlockProjectiles() {return true;};
+    virtual bool canOverlapPlace() {return true;};
+    
 };
 
 // -------- FOOD CLASS --------- //
@@ -76,9 +86,10 @@ class Food : public PassiveActor
 public:
     Food(double startX, double startY, StudentWorld* world) : PassiveActor(IID_FOOD, startX, startY, 90, 1, world) {};
     
-    bool isDestructible() {return false;};
-    bool canBlockBacteria() {return false;};
-    bool canBlockProjectiles() {return false;};
+    virtual bool isDestructible() {return false;};
+    virtual bool canBlockBacteria() {return false;};
+    virtual bool canBlockProjectiles() {return false;};
+    virtual bool canOverlapPlace() {return false;};
 };
 
 
@@ -91,9 +102,9 @@ public:
     // will be the same for both types, only difference is m_pixels and m_damage
     
     // projectile actors are not destructible and cannot block
-    bool isDestructible() {return false;};
-    bool canBlockBacteria() {return false;};
-    bool canBlockProjectiles() {return false;};
+    virtual bool isDestructible() {return false;};
+    virtual bool canBlockBacteria() {return false;};
+    virtual bool canBlockProjectiles() {return false;};
     
 private:
     int m_pixels; // set m_pixels to limit at beginning, decrement with every tick
@@ -124,9 +135,9 @@ public:
     virtual void uniqueEffect(); // each type has a different unique effect
     
     // extra actors can be damaged and cannot block
-    bool isDestructible() {return true;};
-    bool canBlockBacteria() {return false;};
-    bool canBlockProjectiles() {return false;};
+    virtual bool isDestructible() {return true;};
+    virtual bool canBlockBacteria() {return false;};
+    virtual bool canBlockProjectiles() {return false;};
     
 private:
     int m_lifetime; // track own lifetime

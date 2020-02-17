@@ -5,6 +5,7 @@
 #include "Actor.h"
 #include <list>
 #include <string>
+#include <cstdlib>
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 

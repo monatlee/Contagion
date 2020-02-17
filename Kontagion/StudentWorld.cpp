@@ -34,14 +34,62 @@ int StudentWorld::init()
     // allocate a new socrates
     m_socrates = new Socrates(this);
     
-    // create the right amount of dirt piles
-    int numDirt = max(180-20*level, 20);
-    
-    for(int i = 0; i < numDirt; i++)
+    // place FOOD while checking for overlap
+    int numFood = min(5*level, 25);
+    list<Actor*>::iterator it;
+    it = m_actors.begin();
+    for(int i = 0; i < numFood; i++)
     {
+        // generate random location
         int dx, dy;
         randomXandYCoord(dx, dy);
-        m_actors.push_back(new Dirt(dx, dy, this));
+        Actor* temp = new Food(dx, dy, this);
+        
+        // check for overlap
+        while(it != m_actors.end())
+        {
+            // if overlap, regenerate coordinates and restart iterator
+            if( (*it)->overlap(*temp) )
+            {
+                randomXandYCoord(dx, dy);
+                temp = new Food(dx, dy, this);
+                it = m_actors.begin();
+            }
+            else it++;
+        }
+        
+        // add food and reset iterator
+        m_actors.push_back(temp);
+        it = m_actors.begin();
+    }
+    
+    
+    // place DIRT while checking for overlap
+    int numDirt = max(180-20*level, 20);
+    it = m_actors.begin();
+    for(int i = 0; i < numDirt; i++)
+    {
+        // generate a random location
+        int dx, dy;
+        randomXandYCoord(dx, dy);
+        Actor* temp = new Dirt(dx, dy, this);
+        // check for overlap
+        while(it != m_actors.end())
+        {
+            // if overlap, regenerate coordinates and restart iterator
+            if(!(*it)->canOverlapPlace() && (*it)->overlap(*temp) )
+            {
+                //cerr << "overlap" << endl;
+                randomXandYCoord(dx, dy);
+                temp = new Dirt(dx, dy, this);
+                it = m_actors.begin();
+            }
+            else it++;
+        }
+
+        // add dirt & reset iterator
+        m_actors.push_back(temp);
+        it = m_actors.begin();
     }
     
     return GWSTATUS_CONTINUE_GAME;

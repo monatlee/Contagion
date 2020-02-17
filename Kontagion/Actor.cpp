@@ -3,6 +3,29 @@
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
+// --------- ACTOR BASE CLASS -------------//
+bool Actor::overlap(Actor& other)
+{
+    // store locations of current and other actors
+    // my location
+    double m_x = this->getX();
+    double m_y = this->getY();
+    // other location
+    double o_x = other.getX();
+    double o_y = other.getY();
+    
+    // find distance
+    double x = m_x - o_x;
+    double y = m_y - o_y;
+    double dist = pow(x,2) + pow(y, 2);
+    dist = sqrt(dist);
+    
+    // if less than 2*sprite distance
+    if(dist < 2*SPRITE_RADIUS) return true;
+    return false;
+}
+
+
 // --------- SOCRATES BASE CLASS --------- //
 
 Socrates::Socrates(StudentWorld* world): Actor(IID_PLAYER, 0, 128, 0, 0, world)
