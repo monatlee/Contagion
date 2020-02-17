@@ -52,7 +52,7 @@ const int KEY_PRESS_ESCAPE = '\x1b';
 
 const int VIEW_WIDTH = 256;
 const int VIEW_HEIGHT = 256;
-const int VIEW_DIAMETER = 128;
+const int VIEW_RADIUS = 128;
 
 const int SPRITE_WIDTH = 8;
 const int SPRITE_HEIGHT = 8;
