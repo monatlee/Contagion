@@ -3,14 +3,6 @@
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
-// ---- ACTOR BASE CLASS ------- //
-
-// all code is in definitions
-
-// ----- DIRT CLASS ----------- //
-
-// all code is in definitions
-
 // --------- SOCRATES BASE CLASS --------- //
 
 Socrates::Socrates(StudentWorld* world): Actor(IID_PLAYER, 0, 128, 0, 0, world)
