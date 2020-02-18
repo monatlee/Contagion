@@ -24,6 +24,13 @@ public:
     // return the list of actors
     std::list<Actor*> getActors() {return m_actors;};
     
+    // getters for begin and end
+    std::list<Actor*>::iterator getActorsBegin() {return m_actors.begin();};
+    std::list<Actor*>::iterator getActorsEnd() {return m_actors.end();};
+    
+    // add an Actor to m_actors
+    void addActor(Actor* newActor) {m_actors.push_back(newActor);};
+    
     // getter for Socrates
     Socrates* getSocrates() {return m_socrates;};
 

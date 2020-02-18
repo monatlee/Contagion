@@ -57,6 +57,61 @@ void Socrates::doSomething()
         // user hit a key during this tick!
         switch (ch)
         {
+            case KEY_PRESS_SPACE: // spray charge
+            {
+                if(m_sprayCharges >= 1) // if he still has spray charges
+                {
+                    // add a spray 2*SPRITE_RADIUS pixels in front in same direction
+                    
+                    // find new location
+                    double dx, dy;
+                    getPositionInThisDirection(getDirection(), 2*SPRITE_RADIUS, dx, dy);
+
+                    // allocate a new spray
+                    Actor* newSpray = new DisinfectantSpray(dx, dy, getDirection(), getMyWorld());
+
+                    // add spray to m_actors list
+                    getMyWorld()->addActor(newSpray);
+                    
+                    // decrement spray count
+                    m_sprayCharges--;
+                    
+                    // play sound
+                    getMyWorld()->playSound(SOUND_PLAYER_SPRAY);
+                }
+                break;
+            }
+            case KEY_PRESS_ENTER: // flame thrower
+            {
+                if(m_flameCharges >= 1) // if still has flame thrower charges
+                {
+                    // add 16 flame objects 2*SPRITE_RADIUS pixels in front
+                    // 22 degree increments around Socrates
+                    // face the same direction/angle created around socrates
+                    int dir = getDirection();
+                    for(int i = 0; i < 16; i++)
+                    {
+                        // find new locatoin
+                        double dx, dy;
+                        getPositionInThisDirection(dir, 2*SPRITE_RADIUS, dx, dy);
+                        
+                        // allocate a new flame
+                        Actor* newFlame = new Flame(dx, dy, dir, getMyWorld());
+                        
+                        // add flame to m_actors list
+                        getMyWorld()->addActor(newFlame);
+                        
+                        dir+=22;
+                    }
+                    
+                    // decrement flame count
+                    m_flameCharges--;
+                    
+                    // play sound
+                    getMyWorld()->playSound(SOUND_PLAYER_FIRE);
+                }
+                break;
+            }
             case KEY_PRESS_LEFT: //move Socrates counterclockwise
             {
                 // update positional angle
@@ -99,12 +154,14 @@ void ProjectileActor::doSomething()
     // check if alive, if not => return
     if(!isAlive()) return;
     
+    // moveForward(SPRITE_RADIUS*2);
+    
     // create iterator over this world's other actos
     list<Actor*>::iterator it;
-    it = getMyWorld()->getActors().begin();
-    
+    it = getMyWorld()->getActorsBegin();
+
     // check for overlap with a damageable object
-    while(it != getMyWorld()->getActors().end())
+    while(it != getMyWorld()->getActorsEnd())
     {
         // if overlap, damage by m_damage
         if( this->overlap(**it) && (*it)->isDamageable())
@@ -114,20 +171,17 @@ void ProjectileActor::doSomething()
             setAlive(false);
             return; // only check for overlap with one object
         }
-        else
-        {
-            // move forward in current direction by SPRITE_RADIUS*2 pixels
-            moveForward(SPRITE_RADIUS*2);
-            
-            // decrement pixels
-            m_pixels--;
-            
-            // check if moved maximum distance and set to dead if so
-            if(m_pixels <= 0) { setAlive(false); }
-        }
-        
         it++;
     }
+    
+    // move forward in current direction by SPRITE_RADIUS*2 pixels
+    moveForward(SPRITE_RADIUS*2);
+
+    // decrement pixels
+    m_pixels--;
+
+    // check if moved maximum distance and set to dead if so
+    if(m_pixels <= 0) { setAlive(false); }
 
 }
 
@@ -145,9 +199,8 @@ void ExtraActor::doSomething()
     // if not alive, immediately return
     if(!isAlive()) return;
     
-    Actor* temp = getMyWorld()->getSocrates();
     // check for overlap with socrates
-    if( this->overlap(*temp))
+    if( this->overlap(*getMyWorld()->getSocrates()))
     {
         // update points
         getMyWorld()->increaseScore(m_scorePoints);
