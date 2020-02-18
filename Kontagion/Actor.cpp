@@ -122,7 +122,7 @@ void ProjectileActor::doSomething()
             // decrement pixels
             m_pixels--;
             
-            // check if moved maximum distance and set to dead if so 
+            // check if moved maximum distance and set to dead if so
             if(m_pixels <= 0) { setAlive(false); }
         }
         
@@ -131,3 +131,70 @@ void ProjectileActor::doSomething()
 
 }
 
+// ********** EXTRA ACTOR BASE CLASS *********** //
+ExtraActor::ExtraActor(int imageID, double startX, double startY, StudentWorld* world, bool goodie, int scorePoints) : Actor(imageID, startX, startY, 0, 1, world, 1)
+{
+    int level = getMyWorld()->getLevel();
+    m_lifetime = max(rand()%(300-10*level), 50);
+    m_goodie = goodie;
+    m_scorePoints = scorePoints;
+};
+
+void ExtraActor::doSomething()
+{
+    // if not alive, immediately return
+    if(!isAlive()) return;
+    
+    Actor* temp = getMyWorld()->getSocrates();
+    // check for overlap with socrates
+    if( this->overlap(*temp))
+    {
+        // update points
+        getMyWorld()->increaseScore(m_scorePoints);
+        
+        // set state to dead
+        setAlive(false);
+        
+        // if goodie, play sound
+        if(m_goodie) getMyWorld()->playSound(SOUND_GOT_GOODIE);
+        
+        // every goodie / fungus has a unique effect
+        uniqueEffect();
+    }
+    
+    // if lifetime has expired, remove self from game
+    if(m_lifetime <= 0) setAlive(false);
+    
+    // decrement lifetime every time
+    m_lifetime--;
+}
+
+// ------- RESTORE HEALTH GOODIE ACTOR --------- //
+void RestoreHealthGoodie::uniqueEffect()
+{
+    // restore Socrates health to full
+    getMyWorld()->getSocrates()->setHitPoints(100);
+}
+
+// ------- FLAME THROWER GOODIE ACTOR --------- //
+void FlameThrowerGoodie::uniqueEffect()
+{
+    // add 5 flame thrower charges to arsenal
+    int newFlames = getMyWorld()->getSocrates()->getFlameCharges() + 5;
+    getMyWorld()->getSocrates()->setFlameCharges(newFlames);
+}
+
+// ------- EXTRA LIFE GOODIE ACTOR --------- //
+void ExtraLifeGoodie::uniqueEffect()
+{
+    // give player an extra life
+    getMyWorld()->incLives();
+}
+
+// ------- FUNGUS ACTOR --------- //
+void Fungus::uniqueEffect()
+{
+    // give Socrates 5 points of damage
+    int newPoints = getMyWorld()->getSocrates()->getHitPoints() - 5;
+    getMyWorld()->getSocrates()->setHitPoints(newPoints);
+}

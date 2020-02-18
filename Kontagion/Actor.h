@@ -4,6 +4,7 @@
 #include "GraphObject.h"
 #include <cmath>
 #include <list>
+#include <cstdlib>
 
 class StudentWorld;
 
@@ -23,15 +24,15 @@ public:
     // getter of pointer to the world
     StudentWorld* getMyWorld() {return m_world;};
     
+    // getters and setters for hit points
+    int getHitPoints() {return m_hitPoints;};
+    void setHitPoints(int newPoints) {m_hitPoints = newPoints;};
+    
     // check for overlap (must be overridden for bacteria)
     bool overlap(Actor& other);
     
     // check if can overlap in init (set default to false)
-    bool canOverlapPlace() {return false; };
-    
-    // getters and setters for hit points
-    int getHitPoints() {return m_hitPoints;};
-    void setHitPoints(int newPoints) {m_hitPoints = newPoints;};
+    virtual bool canOverlapPlace() {return false; };
 
     // each actor must be able to tell if they are destructible and what they can block
     virtual bool isDamageable() = 0;
@@ -57,6 +58,10 @@ public:
     bool canBlockBacteria() {return false;};
     bool canBlockProjectiles() {return false;};
     
+    // getters and setters for flame charges
+    int getFlameCharges() {return m_flameCharges;};
+    void setFlameCharges(int newCharges) {m_flameCharges = newCharges;};
+    
 private:
     int m_sprayCharges;
     int m_flameCharges;
@@ -69,7 +74,6 @@ class PassiveActor : public Actor
 public:
     PassiveActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints) : Actor (imageID, startX, startY, dir, depth, world, hitPoints) {};
     virtual void doSomething() {return;};
-    
 };
 
 // ------- DIRT CLASS ------------ //
@@ -82,7 +86,6 @@ public:
     virtual bool canBlockBacteria() {return true;};
     virtual bool canBlockProjectiles() {return true;};
     virtual bool canOverlapPlace() {return true;};
-    
 };
 
 // -------- FOOD CLASS --------- //
@@ -103,7 +106,7 @@ class ProjectileActor : public Actor
 {
 public:
     // constructor
-    ProjectileActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints, int pixels, int damage) : Actor (imageID, startX, startY, dir, depth, world, hitPoints), m_pixels(pixels), m_damage(damage) {};
+    ProjectileActor(int imageID, double startX, double startY, int dir, StudentWorld* world, int hitPoints, int pixels, int damage) : Actor (imageID, startX, startY, dir, 1, world, hitPoints), m_pixels(pixels), m_damage(damage) {};
     
     virtual void doSomething();
     // will be the same for both types, only difference is m_pixels and m_damage
@@ -123,7 +126,7 @@ class Flame : public ProjectileActor
 {
 public:
     // constructor sets m_pixels to 32 and m_damage to 5
-    Flame(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_FLAME, startX, startY, dir, 1, world, 1, 32, 5) {};
+    Flame(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_FLAME, startX, startY, dir,  world, 1, 32, 5) {};
 
 };
 
@@ -132,7 +135,7 @@ class DisinfectantSpray : public ProjectileActor
 {
 public:
     // constructor sets m_pixels to 112 and m_damage to 2
-    DisinfectantSpray(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_FLAME, startX, startY, dir, 1, world, 1, 112, 2) {};
+    DisinfectantSpray(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_FLAME, startX, startY, dir, world, 1, 112, 2) {};
 };
 
 // ****************** EXTRA ACTOR BASE CASE FOR GOODIES AND FUNGUS ******** //
@@ -140,9 +143,10 @@ class ExtraActor : public Actor
 {
 public:
     // constructor
+    ExtraActor(int imageID, double startX, double startY, StudentWorld* world, bool goodie, int scorePoints);
+    
     virtual void doSomething();
-    virtual void updateScore(); // each type has different amount of point gain / loss
-    virtual void uniqueEffect(); // each type has a different unique effect
+    virtual void uniqueEffect()=0; // each type has a different unique effect
     
     // extra actors can be damaged and cannot block
     virtual bool isDamageable() {return true;};
@@ -159,40 +163,52 @@ private:
 class RestoreHealthGoodie : public ExtraActor
 {
 public:
-    // m_lifetime to max(rand() % (300 – 10 * L), 50)
+    // constructor
     // m_scorePoints is +250
     // m_goodie is true
+    RestoreHealthGoodie(double startX, double startY, StudentWorld* world) : ExtraActor(IID_RESTORE_HEALTH_GOODIE, startX, startY, world, true, 250) {};
+    
     // uniqueEffect is to restore Socrates health to full
+    virtual void uniqueEffect();
 };
 
 // -------------------- FLAME THROWER GOODIE ACTOR ---------------------- //
 class FlameThrowerGoodie : public ExtraActor
 {
 public:
-    // m_lifetime to max(rand() % (300 – 10 * L), 50)
+    // constructor
     // m_scorePoints is 300
     // m_goodie is true
+    FlameThrowerGoodie(double startX, double startY, StudentWorld* world) : ExtraActor(IID_FLAME_THROWER_GOODIE, startX, startY, world, true, 300) {};
+    
     // uniqueEffect is to add 5 flame thrower charges to arsenal
+    virtual void uniqueEffect();
 };
 
 // -------------------- EXTRA LIFE GOODIE ACTOR ---------------------- //
 class ExtraLifeGoodie : public ExtraActor
 {
 public:
-    // m_lifetime to max(rand() % (300 – 10 * L), 50)
+    // constructor
     // m_scorePoints is 500
     // m_goodie is true
+    ExtraLifeGoodie(double startX, double startY, StudentWorld* world) : ExtraActor(IID_EXTRA_LIFE_GOODIE, startX, startY, world, true, 500) {};
+    
     // uniqueEffect is to give player an extra life
+    virtual void uniqueEffect();
 };
 
 // -------------------- FUNGUS ACTOR ---------------------- //
 class Fungus : public ExtraActor
 {
 public:
-    // m_lifetime to max(rand() % (300 – 10 * L), 50)
+    // constructor
     // m_scorePoints is -50
     // m_goodie is FALSE
+    Fungus(double startX, double startY, StudentWorld* world) : ExtraActor(IID_EXTRA_LIFE_GOODIE, startX, startY, world, false, -50) {};
+    
     // uniqueEffect is to tell Socrates he has received 20 points of damage
+    virtual void uniqueEffect();
 };
 
 #endif // ACTOR_H_

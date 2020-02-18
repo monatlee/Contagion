@@ -17,8 +17,15 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
+    
+    // generate a random X and Y coordinate in the circle
     void randomXandYCoord(int& x, int& y);
+    
+    // return the list of actors
     std::list<Actor*> getActors() {return m_actors;};
+    
+    // getter for Socrates
+    Socrates* getSocrates() {return m_socrates;};
 
 private:
     Socrates* m_socrates;
