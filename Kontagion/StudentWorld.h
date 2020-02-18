@@ -18,6 +18,7 @@ public:
     virtual int move();
     virtual void cleanUp();
     void randomXandYCoord(int& x, int& y);
+    std::list<Actor*> getActors() {return m_actors;};
 
 private:
     Socrates* m_socrates;

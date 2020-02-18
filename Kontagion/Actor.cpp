@@ -1,6 +1,8 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 
+using namespace std;
+
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 // --------- ACTOR BASE CLASS -------------//
@@ -28,11 +30,10 @@ bool Actor::overlap(Actor& other)
 
 // --------- SOCRATES BASE CLASS --------- //
 
-Socrates::Socrates(StudentWorld* world): Actor(IID_PLAYER, 0, 128, 0, 0, world)
+Socrates::Socrates(StudentWorld* world): Actor(IID_PLAYER, 0, 128, 0, 0, world, 100)
 {
     m_sprayCharges = 20;
     m_flameCharges = 5;
-    m_hitPoints = 100;
     m_positionalAngle = 180;
 }
 
@@ -89,5 +90,44 @@ void Socrates::doSomething()
     
     // if no user input, regenerate spray charges
     if(m_sprayCharges < 20) m_sprayCharges ++;
+}
+
+
+// ********** PROJECTILE ACTOR BASE CLASS *********** //
+void ProjectileActor::doSomething()
+{
+    // check if alive, if not => return
+    if(!isAlive()) return;
+    
+    // create iterator over this world's other actos
+    list<Actor*>::iterator it;
+    it = getMyWorld()->getActors().begin();
+    
+    // check for overlap with a damageable object
+    while(it != getMyWorld()->getActors().end())
+    {
+        // if overlap, damage by m_damage
+        if( this->overlap(**it) && (*it)->isDamageable())
+        {
+            int afterDamage = (*it)->getHitPoints() - m_damage;
+            (*it)->setHitPoints(afterDamage);
+            setAlive(false);
+            return; // only check for overlap with one object
+        }
+        else
+        {
+            // move forward in current direction by SPRITE_RADIUS*2 pixels
+            moveForward(SPRITE_RADIUS*2);
+            
+            // decrement pixels
+            m_pixels--;
+            
+            // check if moved maximum distance and set to dead if so 
+            if(m_pixels <= 0) { setAlive(false); }
+        }
+        
+        it++;
+    }
+
 }
 

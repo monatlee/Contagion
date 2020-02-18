@@ -3,6 +3,7 @@
 
 #include "GraphObject.h"
 #include <cmath>
+#include <list>
 
 class StudentWorld;
 
@@ -12,7 +13,7 @@ class StudentWorld;
 class Actor : public GraphObject
 {
 public:
-    Actor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world) : GraphObject(imageID, startX, startY, dir, depth), m_alive(true), m_world(world) {};
+    Actor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints) : GraphObject(imageID, startX, startY, dir, depth), m_alive(true), m_world(world), m_hitPoints(hitPoints) {};
     virtual void doSomething() = 0;
     
     // getters and setters for live status
@@ -27,14 +28,19 @@ public:
     
     // check if can overlap in init (set default to false)
     bool canOverlapPlace() {return false; };
+    
+    // getters and setters for hit points
+    int getHitPoints() {return m_hitPoints;};
+    void setHitPoints(int newPoints) {m_hitPoints = newPoints;};
 
     // each actor must be able to tell if they are destructible and what they can block
-    virtual bool isDestructible() = 0;
+    virtual bool isDamageable() = 0;
     virtual bool canBlockBacteria() = 0;
     virtual bool canBlockProjectiles() = 0;
     
 private:
     bool m_alive;
+    int m_hitPoints;
     StudentWorld* m_world;
 };
 
@@ -47,12 +53,11 @@ public:
     void movePerimeter(double& x, double& y);
     
     // Socrates is destructible and cannot block
-    bool isDestructible() {return false;};
+    bool isDamageable() {return false;};
     bool canBlockBacteria() {return false;};
     bool canBlockProjectiles() {return false;};
     
 private:
-    int m_hitPoints;
     int m_sprayCharges;
     int m_flameCharges;
     int m_positionalAngle;
@@ -62,7 +67,7 @@ private:
 class PassiveActor : public Actor
 {
 public:
-    PassiveActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world) : Actor (imageID, startX, startY, dir, depth, world) {};
+    PassiveActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints) : Actor (imageID, startX, startY, dir, depth, world, hitPoints) {};
     virtual void doSomething() {return;};
     
 };
@@ -71,9 +76,9 @@ public:
 class Dirt : public PassiveActor
 {
 public:
-    Dirt(double startX, double startY, StudentWorld* world) : PassiveActor(IID_DIRT, startX, startY, 90, 1, world) {};
+    Dirt(double startX, double startY, StudentWorld* world) : PassiveActor(IID_DIRT, startX, startY, 90, 1, world, 1) {};
     
-    virtual bool isDestructible() {return true;};
+    virtual bool isDamageable() {return true;};
     virtual bool canBlockBacteria() {return true;};
     virtual bool canBlockProjectiles() {return true;};
     virtual bool canOverlapPlace() {return true;};
@@ -84,9 +89,9 @@ public:
 class Food : public PassiveActor
 {
 public:
-    Food(double startX, double startY, StudentWorld* world) : PassiveActor(IID_FOOD, startX, startY, 90, 1, world) {};
+    Food(double startX, double startY, StudentWorld* world) : PassiveActor(IID_FOOD, startX, startY, 90, 1, world, 0) {};
     
-    virtual bool isDestructible() {return false;};
+    virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
     virtual bool canOverlapPlace() {return false;};
@@ -98,11 +103,13 @@ class ProjectileActor : public Actor
 {
 public:
     // constructor
+    ProjectileActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints, int pixels, int damage) : Actor (imageID, startX, startY, dir, depth, world, hitPoints), m_pixels(pixels), m_damage(damage) {};
+    
     virtual void doSomething();
     // will be the same for both types, only difference is m_pixels and m_damage
     
     // projectile actors are not destructible and cannot block
-    virtual bool isDestructible() {return false;};
+    virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
     
@@ -116,6 +123,8 @@ class Flame : public ProjectileActor
 {
 public:
     // constructor sets m_pixels to 32 and m_damage to 5
+    Flame(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_FLAME, startX, startY, dir, 1, world, 1, 32, 5) {};
+
 };
 
 // --------------------- DISINFECTANT SPRAY ACTOR --------------------------------------- //
@@ -123,6 +132,7 @@ class DisinfectantSpray : public ProjectileActor
 {
 public:
     // constructor sets m_pixels to 112 and m_damage to 2
+    DisinfectantSpray(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_FLAME, startX, startY, dir, 1, world, 1, 112, 2) {};
 };
 
 // ****************** EXTRA ACTOR BASE CASE FOR GOODIES AND FUNGUS ******** //
@@ -135,7 +145,7 @@ public:
     virtual void uniqueEffect(); // each type has a different unique effect
     
     // extra actors can be damaged and cannot block
-    virtual bool isDestructible() {return true;};
+    virtual bool isDamageable() {return true;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
     
