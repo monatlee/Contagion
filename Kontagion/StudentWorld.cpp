@@ -62,6 +62,7 @@ int StudentWorld::init()
             // if overlap, regenerate coordinates and restart iterator
             if( (*it)->overlap(*temp) )
             {
+                delete temp;
                 randomCenter(dx, dy);
                 temp = new Food(dx, dy, this);
                 it = m_actors.begin();
@@ -91,6 +92,7 @@ int StudentWorld::init()
             if(!(*it)->canOverlapPlace() && (*it)->overlap(*temp) )
             {
                 //cerr << "overlap" << endl;
+                delete temp;
                 randomCenter(dx, dy);
                 temp = new Dirt(dx, dy, this);
                 it = m_actors.begin();
