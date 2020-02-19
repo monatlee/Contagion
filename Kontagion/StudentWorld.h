@@ -18,8 +18,16 @@ public:
     virtual int move();
     virtual void cleanUp();
     
+    // helper methods for move
+    void removeDeadActors();
+    void addNewActors();
+    void updateDisplayText();
+    
     // generate a random X and Y coordinate in the circle
-    void randomXandYCoord(int& x, int& y);
+    void randomCenter(int& x, int& y);
+    
+    // generate a random X and Y coordinate along the edge of the circle
+    void randomPerimeter(int& x, int& y);
     
     // return the list of actors
     std::list<Actor*> getActors() {return m_actors;};

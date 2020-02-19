@@ -62,10 +62,14 @@ public:
     int getFlameCharges() {return m_flameCharges;};
     void setFlameCharges(int newCharges) {m_flameCharges = newCharges;};
     
+    // getter for spray chargers
+    int getSprayCharges() {return m_sprayCharges;};
+    
 private:
     int m_sprayCharges;
     int m_flameCharges;
     int m_positionalAngle;
+    bool m_justSprayed;
 };
 
 // *************** PASSIVE ACTOR BASE CLASS FOR DIRT AND FOOD **************** //
@@ -135,7 +139,7 @@ class DisinfectantSpray : public ProjectileActor
 {
 public:
     // constructor sets m_pixels to 112 and m_damage to 2
-    DisinfectantSpray(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_FLAME, startX, startY, dir, world, 1, 112, 2) {};
+    DisinfectantSpray(double startX, double startY, int dir, StudentWorld* world) : ProjectileActor(IID_SPRAY, startX, startY, dir, world, 1, 112, 2) {};
 };
 
 // ****************** EXTRA ACTOR BASE CASE FOR GOODIES AND FUNGUS ******** //
@@ -205,7 +209,7 @@ public:
     // constructor
     // m_scorePoints is -50
     // m_goodie is FALSE
-    Fungus(double startX, double startY, StudentWorld* world) : ExtraActor(IID_EXTRA_LIFE_GOODIE, startX, startY, world, false, -50) {};
+    Fungus(double startX, double startY, StudentWorld* world) : ExtraActor(IID_FUNGUS, startX, startY, world, false, -50) {};
     
     // uniqueEffect is to tell Socrates he has received 20 points of damage
     virtual void uniqueEffect();

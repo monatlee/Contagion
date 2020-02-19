@@ -35,6 +35,7 @@ Socrates::Socrates(StudentWorld* world): Actor(IID_PLAYER, 0, 128, 0, 0, world, 
     m_sprayCharges = 20;
     m_flameCharges = 5;
     m_positionalAngle = 180;
+    m_justSprayed = false;
 }
 
 void Socrates::movePerimeter(double& x, double& y)
@@ -78,6 +79,9 @@ void Socrates::doSomething()
                     
                     // play sound
                     getMyWorld()->playSound(SOUND_PLAYER_SPRAY);
+                    
+                    // set just sprayed to true
+                    m_justSprayed = true;
                 }
                 break;
             }
@@ -109,7 +113,11 @@ void Socrates::doSomething()
                     
                     // play sound
                     getMyWorld()->playSound(SOUND_PLAYER_FIRE);
+                    
                 }
+                
+                // set just sprayed to false
+                m_justSprayed = false;
                 break;
             }
             case KEY_PRESS_LEFT: //move Socrates counterclockwise
@@ -124,6 +132,10 @@ void Socrates::doSomething()
                 
                 // change direction
                 setDirection(m_positionalAngle + 180);
+                
+                // set just sprayed to false
+                m_justSprayed = false;
+
                 break;
             }
             case KEY_PRESS_RIGHT: // move Socrates clockwise...;
@@ -138,13 +150,21 @@ void Socrates::doSomething()
                 
                 // change direction
                 setDirection(m_positionalAngle + 180);
+                
+                // set just sprayed to false
+                m_justSprayed = false;
+
                 break;
+
             }
         }
     }
     
     // if no user input, regenerate spray charges
-    if(m_sprayCharges < 20) m_sprayCharges ++;
+    if(m_sprayCharges < 20 && !m_justSprayed) m_sprayCharges++;
+    
+    // set just sprayed to false
+    m_justSprayed = false;
 }
 
 
@@ -166,9 +186,10 @@ void ProjectileActor::doSomething()
         // if overlap, damage by m_damage
         if( this->overlap(**it) && (*it)->isDamageable())
         {
-            int afterDamage = (*it)->getHitPoints() - m_damage;
-            (*it)->setHitPoints(afterDamage);
-            setAlive(false);
+            int afterDamage = (*it)->getHitPoints() - m_damage; // find new damage
+            (*it)->setHitPoints(afterDamage); // set new damage
+            if(afterDamage<=0) (*it)->setAlive(false); // check if other dead
+            setAlive(false); // set self to not alive
             return; // only check for overlap with one object
         }
         it++;
@@ -250,4 +271,5 @@ void Fungus::uniqueEffect()
     // give Socrates 5 points of damage
     int newPoints = getMyWorld()->getSocrates()->getHitPoints() - 5;
     getMyWorld()->getSocrates()->setHitPoints(newPoints);
+    if(newPoints<=0) getMyWorld()->getSocrates()->setAlive(false); // check if socrates is now dead
 }
