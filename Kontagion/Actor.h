@@ -14,7 +14,7 @@ class StudentWorld;
 class Actor : public GraphObject
 {
 public:
-    Actor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints) : GraphObject(imageID, startX, startY, dir, depth), m_alive(true), m_world(world), m_hitPoints(hitPoints) {};
+    Actor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints) : GraphObject(imageID, startX, startY, dir, depth), m_alive(true), m_hitPoints(hitPoints), m_world(world) {};
     virtual void doSomething() = 0;
     
     // getters and setters for live status
