@@ -315,7 +315,7 @@ void Pit::doSomething()
     if(chance==1)
     {
         // choose a bacteria to generate
-        int bact = randInt(1,3);
+        int bact = 1; //randInt(1,3);
 
         switch(bact)
         {
@@ -438,11 +438,13 @@ void Bacteria::takeDamage(int damage)
 
 void Salmonella::bacteriaMove()
 {
+    double dx, dy;
+    
     if(getMovement()>0) // keep moving in same direction
     {
+        cerr << "trying to move" << endl;
         setMovement(getMovement()-1);
         
-        double dx, dy;
         // find position 3 units forward
         getPositionInThisDirection(getDirection(), 3, dx, dy);
         
@@ -456,11 +458,8 @@ void Salmonella::bacteriaMove()
         dist = sqrt(dist);
         bool outside = dist >= VIEW_RADIUS;
             
-        if(!blocked && !outside) // if valid location
-        {
-            moveTo(dx, dy); // move to new valid location
-            return; // done once generated
-        }
+        // move to new valid location
+        if(!blocked && !outside) moveTo(dx, dy);
             
         else // regenerate direction
         {
@@ -474,8 +473,41 @@ void Salmonella::bacteriaMove()
     
     else // try to find food
     {
-        
-        
+        Direction dir;
+        // check if food is accessible
+        if(getMyWorld()->findFood(getX(), getY(), dir))
+        {
+            setDirection(dir);
+            
+            // check position 3 units forward
+            getPositionInThisDirection(dir, 3, dx, dy);
+
+            // check blockage
+            bool blocked = getMyWorld()->isBacteriaBlocked(dx,dy);
+
+            if(!blocked)
+            {
+                moveTo(dx, dy);
+            }
+
+            else // regenerate direction
+            {
+                dir = randInt(0, 359);
+                setDirection(dir);
+                setMovement(10); // resets movement plan distance
+            }
+
+            return;
+        }
+
+        // if no food within
+        else
+        {
+            int dir = randInt(0, 359);
+            setDirection(dir);
+            setMovement(10); // resets movement plan distance
+            return;
+        }
     }
 }
 

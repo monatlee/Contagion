@@ -54,6 +54,9 @@ public:
     // try to find the nearest food to a location
     bool findFood(int x, int y, int& dir);
     
+    // find direction between two locations
+    int findDirection(int fx, int fy, int sx, int sy);
+    
     
 
 private:

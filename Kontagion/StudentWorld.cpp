@@ -361,6 +361,9 @@ bool StudentWorld::findFood(int x, int y, int& dir)
             if(dist < minDistance)
             {
                 minDistance = dist;
+                cerr << "the food is at " << (*it)->getX() << " , " << (*it)->getY() << endl;
+                dir = findDirection(x, y, (*it)->getX(), (*it)->getY());
+                cerr << "i think the direction is at " << dir << endl;
             }
         }
         it++;
@@ -369,3 +372,8 @@ bool StudentWorld::findFood(int x, int y, int& dir)
     return minDistance < 128;
 }
 
+// ----------- FIND DIRECTION BETWEEN TWO LOCATIONS ------- //
+int StudentWorld::findDirection(int fx, int fy, int sx, int sy)
+{
+    return 180+atan2(fy-sy, fx - sx)*180/3.14159265;
+}
