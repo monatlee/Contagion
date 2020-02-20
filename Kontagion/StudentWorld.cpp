@@ -52,24 +52,21 @@ int StudentWorld::init()
         // generate random location
         int dx, dy;
         randomCenter(dx, dy);
-        Actor* temp = new Food(dx, dy, this);
         
         // check for overlap
         while(it != m_actors.end())
         {
             // if overlap, regenerate coordinates and restart iterator
-            if( (*it)->overlap(*temp) )
+            if( (*it)->overlapLocation(dx, dy) )
             {
-                delete temp;
                 randomCenter(dx, dy);
-                temp = new Food(dx, dy, this);
                 it = m_actors.begin();
             }
             else it++;
         }
         
         // add food and reset iterator
-        m_actors.push_back(temp);
+        m_actors.push_back(new Food(dx, dy, this));
         it = m_actors.begin();
     }
     
@@ -82,24 +79,22 @@ int StudentWorld::init()
         // generate a random location
         int dx, dy;
         randomCenter(dx, dy);
-        Actor* temp = new Dirt(dx, dy, this);
+        
         // check for overlap
         while(it != m_actors.end())
         {
             // if overlap, regenerate coordinates and restart iterator
-            if(!(*it)->canOverlapPlace() && (*it)->overlap(*temp) )
+            if(!(*it)->canOverlapPlace() && (*it)->overlapLocation(dx, dy) )
             {
                 //cerr << "overlap" << endl;
-                delete temp;
                 randomCenter(dx, dy);
-                temp = new Dirt(dx, dy, this);
                 it = m_actors.begin();
             }
             else it++;
         }
 
         // add dirt & reset iterator
-        m_actors.push_back(temp);
+        m_actors.push_back(new Dirt(dx, dy, this));
         it = m_actors.begin();
     }
     
