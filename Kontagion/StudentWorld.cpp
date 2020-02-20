@@ -43,9 +43,38 @@ int StudentWorld::init()
     // allocate a new socrates
     m_socrates = new Socrates(this);
     
+    // set the number of pits and bacteria
+    m_pits = level;
+    m_bacteria = 10*level;
+    
+    // place PITS while checking for overlap
+    list<Actor*>::iterator it;
+    it = m_actors.begin();
+    for(int i = 0; i < level; i++)
+    {
+        // generate random location
+        int dx, dy;
+        randomCenter(dx, dy);
+        
+        // check for overlap
+        while(it != m_actors.end())
+        {
+            // if overlap, regenerate coordinates and restart iterator
+            if( (*it)->overlapLocation(dx, dy) )
+            {
+                randomCenter(dx, dy);
+                it = m_actors.begin();
+            }
+            else it++;
+        }
+        
+        // add food and reset iterator
+        m_actors.push_back(new Pit(dx, dy, this));
+        it = m_actors.begin();
+    }
+    
     // place FOOD while checking for overlap
     int numFood = min(5*level, 25);
-    list<Actor*>::iterator it;
     it = m_actors.begin();
     for(int i = 0; i < numFood; i++)
     {
@@ -120,6 +149,7 @@ int StudentWorld::move()
             if(!m_socrates->isAlive()) return GWSTATUS_PLAYER_DIED;
             
             // if killed all bacteria and pits are done, move on to next level
+            if(m_bacteria==0 & m_pits==0) return GWSTATUS_FINISHED_LEVEL;
         }
         it++;
     }
@@ -255,10 +285,8 @@ void StudentWorld::damageActors(int x, int y, int damage, bool& flag)
         // check for overlap with damageable object
         if((*it)->overlapLocation(x, y) && (*it)->isDamageable())
         {
-            //cerr << "other x is " << x << " my x is " << (*it)->getX();
-            int afterDamage = (*it)->getHitPoints() - damage; // find new damage
-            (*it)->setHitPoints(afterDamage); // set new damage
-            if(afterDamage<=0) (*it)->setAlive(false); // check if other dead
+            // tell actor to take damage
+            (*it)->takeDamage(damage);
             
             // change flag to true if used
             flag=true;
@@ -268,3 +296,76 @@ void StudentWorld::damageActors(int x, int y, int damage, bool& flag)
         it++;
     }
 }
+
+
+// ------------ CHECK FOR OVERLAP WITH FOOD -------- //
+void StudentWorld::eatFood(int x, int y, bool& flag)
+{
+    list<Actor*>::iterator it;
+    it = m_actors.begin();
+    while(it != m_actors.end())
+    {
+        // check for overlap with food
+        if((*it)->overlapLocation(x, y) && (*it)->canEat())
+        {
+            (*it)->setAlive(false);
+            flag=true;
+            return; // only eat one thing
+        }
+        it++;
+    }
+}
+
+// ---------- CHECK FOR BLOCKED BACTERIA --------- //
+bool StudentWorld::isBacteriaBlocked(int x, int y)
+{
+    // definition of overlap means that the Euclidean distance from the regular salmonella’s proposed new (x, y) location to the dirt pile is <= SPRITE_RADIUS pixels.
+    
+    list<Actor*>::iterator it;
+    it = m_actors.begin();
+    while(it != m_actors.end())
+    {
+        // find distance
+        double x_dis = (*it)->getX() - x;
+        double y_dis = (*it)->getY() - y;
+        double dist = pow(x_dis, 2) + pow(y_dis, 2);
+        dist = sqrt(dist);
+        
+        // check if less than SPRITE_RADIUS and if actor can block bacteria
+        if(dist <= SPRITE_RADIUS && (*it)->canBlockBacteria()) return true;
+        
+        it++;
+    }
+    
+    return false;
+}
+
+// ------------ LOOK FOR FOOD ----------------- //
+bool StudentWorld::findFood(int x, int y, int& dir)
+{
+    int minDistance=VIEW_RADIUS;
+    
+    list<Actor*>::iterator it;
+    it = m_actors.begin();
+    while(it != m_actors.end())
+    {
+        // look for food
+        if((*it)->canEat())
+        {
+            // find distance
+            int x_dist = x-(*it)->getX();
+            int y_dist = y-(*it)->getY();
+            double dist = pow(x_dist, 2) + pow(y_dist, 2);
+            dist = sqrt(dist);
+            
+            if(dist < minDistance)
+            {
+                minDistance = dist;
+            }
+        }
+        it++;
+    }
+    
+    return minDistance < 128;
+}
+

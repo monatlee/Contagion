@@ -6,7 +6,7 @@ using namespace std;
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 // --------- ACTOR BASE CLASS -------------//
-bool Actor::overlap(Actor& other)
+bool Actor::overlapActor(Actor& other)
 {
     // store locations of current and other actors
     // my location
@@ -58,6 +58,23 @@ void Socrates::movePerimeter(double& x, double& y)
     
     x = 128*cos(m_positionalAngle*pi/180) + VIEW_WIDTH/2;
     y = 128*sin(m_positionalAngle*pi/180) + VIEW_WIDTH/2;
+}
+
+void Socrates::takeDamage(int damage)
+{
+    int afterDamage=getHitPoints() - damage;
+    setHitPoints(afterDamage);
+    
+    if(afterDamage>0) // damaged but still aliave
+    {
+        getMyWorld()->playSound(SOUND_PLAYER_HURT);
+    }
+    
+    else // he dead
+    {
+        setAlive(false);
+        getMyWorld()->playSound(SOUND_PLAYER_DIE);
+    }
 }
 
 void Socrates::doSomething()
@@ -181,6 +198,13 @@ void Socrates::doSomething()
     m_justSprayed = false;
 }
 
+// ********** DIRT ACTOR CLASS ************* //
+void Dirt::takeDamage(int damage)
+{
+    int afterDamage=getHitPoints() - damage;
+    setHitPoints(afterDamage);
+    if(afterDamage<=0) setAlive(false);
+}
 
 // ********** PROJECTILE ACTOR BASE CLASS *********** //
 void ProjectileActor::doSomething()
@@ -225,7 +249,7 @@ void ExtraActor::doSomething()
     if(!isAlive()) return;
     
     // check for overlap with socrates
-    if( this->overlap(*getMyWorld()->getSocrates()))
+    if( this->overlapActor(*getMyWorld()->getSocrates()))
     {
         // update points
         getMyWorld()->increaseScore(m_scorePoints);
@@ -273,7 +297,202 @@ void ExtraLifeGoodie::uniqueEffect()
 void Fungus::uniqueEffect()
 {
     // give Socrates 5 points of damage
-    int newPoints = getMyWorld()->getSocrates()->getHitPoints() - 5;
-    getMyWorld()->getSocrates()->setHitPoints(newPoints);
-    if(newPoints<=0) getMyWorld()->getSocrates()->setAlive(false); // check if socrates is now dead
+    getMyWorld()->getSocrates()->takeDamage(5);
+}
+
+// ************* PIT ACTOR ***************** //
+void Pit::doSomething()
+{
+    if(m_rSalmonella==0 && m_aSalmonella==0 && m_eColi==0 )
+    {
+        // update StudentWorld
+        getMyWorld()->decPits();
+        setAlive(false); // set to dead
+    }
+    
+    // 1 in 50 chance of bacteria generated
+    int chance = randInt(1, 50);
+    if(chance==1)
+    {
+        // choose a bacteria to generate
+        int bact = randInt(1,3);
+
+        switch(bact)
+        {
+            case(1): // regular salmonella
+            {
+                if(m_rSalmonella > 0)
+                {
+                    // add a RegularSalmonella to student world
+                    getMyWorld()->addActor(new RegularSalmonella(getX(), getY(), getMyWorld()));
+                    
+                    m_rSalmonella--; // decrement count
+                }
+                break;
+            }
+            
+            case(2): // aggressive salmonella
+            {
+                if(m_aSalmonella > 0)
+                {
+                    // add an AggressiveSalmonella to student world
+                    getMyWorld()->addActor(new AggressiveSalmonella(getX(), getY(), getMyWorld()));
+                    
+                    m_aSalmonella--; // decrement count
+                }
+                break;
+            }
+
+            case(3): // eColi
+            {
+                if(m_eColi > 0)
+                {
+                    // add an eColi to student world
+                    getMyWorld()->addActor(new Ecoli(getX(), getY(), getMyWorld()));
+                    
+                    m_eColi--; // decrement count
+                }
+                break;
+            }
+        }
+        
+        // play sound
+        getMyWorld()->playSound(SOUND_BACTERIUM_BORN);
+    }
+}
+
+// *************** BACTERIA ACTOR ******************* //
+void Bacteria::doSomething()
+{
+    // if dead, immediately return
+    if(!isAlive()) return;
+    
+    // aggressive salmonella will look for socrates
+    //firstLookForSocrates();
+    
+    // check for overlap with socrates
+    if(overlapActor(*getMyWorld()->getSocrates()))
+    {
+        getMyWorld()->getSocrates()->takeDamage(m_damage);
+    }
+    
+    // eaten 3 pieces of food since last divided or was born
+    else if(m_food == 3)
+    {
+        // find new x
+        int new_x = getX();
+        if(new_x < VIEW_WIDTH/2) new_x+=SPRITE_RADIUS;
+        if(new_x > VIEW_WIDTH/2) new_x-=SPRITE_RADIUS;
+        
+        // find new y
+        int new_y = getY();
+        if(new_y < VIEW_WIDTH/2) new_y+=SPRITE_RADIUS;
+        if(new_y > VIEW_WIDTH/2) new_y-=SPRITE_RADIUS;
+        
+        // create self
+        addSelf(new_x, new_y);
+        
+        // reset food count
+        m_food=0;
+    }
+    
+    else
+    {
+        // eat eatable food
+        bool eaten = false;
+        getMyWorld()->eatFood(getX(), getY(), eaten);
+    
+        // if ate, increase food
+        if(eaten) m_food++;
+    }
+    
+    // salmonella and ecoli have different movement patterns
+    bacteriaMove();
+}
+
+void Bacteria::takeDamage(int damage)
+{
+    int afterDamage=getHitPoints() - damage;
+    setHitPoints(afterDamage);
+    
+    if(afterDamage>0) // damaged but still aliave
+    {
+        getMyWorld()->playSound(m_damageSound);
+    }
+    
+    else // he dead
+    {
+        setAlive(false);
+        getMyWorld()->playSound(m_deadSound);
+        getMyWorld()->increaseScore(100);
+        
+        // 50% chance bacteria becomes food
+        int food = randInt(0,1);
+        if(food == 0)
+        {
+            // create a new food
+            getMyWorld()->addActor(new Food(getX(), getY(), getMyWorld()));
+        }
+    }
+}
+
+void Salmonella::bacteriaMove()
+{
+    if(getMovement()>0) // keep moving in same direction
+    {
+        setMovement(getMovement()-1);
+        
+        double dx, dy;
+        // find position 3 units forward
+        getPositionInThisDirection(getDirection(), 3, dx, dy);
+        
+        // check blockage
+        bool blocked = getMyWorld()->isBacteriaBlocked(dx,dy );
+            
+        // check if outside perimeter
+        double x = dx - VIEW_WIDTH/2;
+        double y = dy - VIEW_WIDTH/2;
+        double dist = pow(x, 2) + pow(y, 2);
+        dist = sqrt(dist);
+        bool outside = dist >= VIEW_RADIUS;
+            
+        if(!blocked && !outside) // if valid location
+        {
+            moveTo(dx, dy); // move to new valid location
+            return; // done once generated
+        }
+            
+        else // regenerate direction
+        {
+            int dir = randInt(0, 359);
+            setDirection(dir);
+            setMovement(10); // resets movement plan distance
+        }
+        
+        return;
+    }
+    
+    else // try to find food
+    {
+        
+        
+    }
+}
+
+// --------- REGULAR SALMONELLA ------------------ //
+void RegularSalmonella::addSelf(int x, int y)
+{
+    getMyWorld()->addActor(new RegularSalmonella(getX(), getY(), getMyWorld()));
+}
+
+// --------- AGGRESSIVE SALMONELLA --------------- //
+void AggressiveSalmonella::addSelf(int x, int y)
+{
+    getMyWorld()->addActor(new AggressiveSalmonella(getX(), getY(), getMyWorld()));
+}
+
+// --------- E COLI --------------- //
+void Ecoli::addSelf(int x, int y)
+{
+    getMyWorld()->addActor(new Ecoli(getX(), getY(), getMyWorld()));
 }

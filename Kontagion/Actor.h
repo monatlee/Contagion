@@ -29,7 +29,7 @@ public:
     void setHitPoints(int newPoints) {m_hitPoints = newPoints;};
     
     // check for overlap (must be overridden for bacteria)
-    bool overlap(Actor& other);
+    bool overlapActor(Actor& other);
     bool overlapLocation(int x, int y);
     
     // check if can overlap in init (set default to false)
@@ -37,9 +37,15 @@ public:
 
     // each actor must be able to tell if they are destructible / can destruct and what they can block
     virtual bool isDamageable() = 0;
-    virtual bool canDamage() = 0;
     virtual bool canBlockBacteria() = 0;
     virtual bool canBlockProjectiles() = 0;
+    
+    // check if actor can be eaten (default is false)
+    virtual bool canEat() {return false;};
+    
+    // take damage
+    // default is to do nothing => only changes for passive, bacteria, Socrates
+    virtual void takeDamage(int damage) {return;};
     
     
 private:
@@ -60,7 +66,6 @@ public:
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
-    virtual bool canDamage() {return false;};
     
     // getters and setters for flame charges
     int getFlameCharges() {return m_flameCharges;};
@@ -68,6 +73,9 @@ public:
     
     // getter for spray chargers
     int getSprayCharges() {return m_sprayCharges;};
+    
+    // unique takeDamage function
+    virtual void takeDamage(int damage);
     
 private:
     int m_sprayCharges;
@@ -82,9 +90,6 @@ class PassiveActor : public Actor
 public:
     PassiveActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints) : Actor (imageID, startX, startY, dir, depth, world, hitPoints) {};
     virtual void doSomething() {return;};
-    
-    // dirt cannot do damage
-    virtual bool canDamage() {return false;};
 };
 
 // ------- DIRT CLASS ------------ //
@@ -97,6 +102,9 @@ public:
     virtual bool canBlockBacteria() {return true;};
     virtual bool canBlockProjectiles() {return true;};
     virtual bool canOverlapPlace() {return true;};
+    
+    //redefine takeDamage
+    virtual void takeDamage(int damage);
 };
 
 // -------- FOOD CLASS --------- //
@@ -109,6 +117,8 @@ public:
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
     virtual bool canOverlapPlace() {return false;};
+    
+    virtual bool canEat() {return true;};
 };
 
 
@@ -124,10 +134,8 @@ public:
     
     // projectile actors are not destructible and cannot block but can damage
     virtual bool isDamageable() {return false;};
-    virtual bool canDamage() {return true;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
-    
     
 private:
     int m_pixels; // set m_pixels to limit at beginning, decrement with every tick
@@ -163,7 +171,6 @@ public:
     
     // extra actors can be damaged and cannot block or damage
     virtual bool isDamageable() {return true;};
-    virtual bool canDamage() {return false;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
     
@@ -223,6 +230,109 @@ public:
     
     // uniqueEffect is to tell Socrates he has received 20 points of damage
     virtual void uniqueEffect();
+};
+
+
+// ******************** PIT ACTOR *********************** //
+class Pit : public Actor
+{
+public:
+    // constructor
+    Pit(double startX, double startY, StudentWorld* world) : Actor(IID_PIT, startX, startY, 0, 1, world, 1), m_rSalmonella(5), m_aSalmonella(3), m_eColi(2) {};
+    
+    virtual void doSomething();
+    
+    virtual bool isDamageable() {return false;};
+    virtual bool canBlockBacteria() {return false;};
+    virtual bool canBlockProjectiles() {return false;};
+    virtual bool canOverlapPlace() {return false;};
+    
+private:
+    int m_rSalmonella;
+    int m_aSalmonella;
+    int m_eColi;
+};
+
+// ***************** BACTERIA ACTOR ********************** //
+class Bacteria : public Actor
+{
+public:
+    Bacteria(int imageID, double startX, double startY, StudentWorld* world, int hitPoints, int damage, int damageSound, int deadSound) : Actor(imageID, startX, startY, 90, 0, world, hitPoints), m_movementPlanDistance(0), m_damage(damage), m_food(0), m_damageSound(damageSound), m_deadSound(deadSound) {};
+    
+    virtual void doSomething();
+    
+    virtual bool isDamageable() {return true;};
+    virtual bool canBlockBacteria() {return false;};
+    virtual bool canBlockProjectiles() {return false;};
+    virtual bool canOverlapPlace() {return false;};
+    
+    // add copy of self to world
+    virtual void addSelf(int x, int y)=0;
+    
+    // only aggressive salmonella will look for socrates
+    virtual void firstLookForSocrates() {return;};
+    
+    // unique movement plan
+    virtual void bacteriaMove() = 0;
+    
+    // take damage
+    virtual void takeDamage(int damage);
+    
+    // getters and setters for m_movementPlanDistance
+    int getMovement() {return m_movementPlanDistance;};
+    void setMovement(int newDistance) {m_movementPlanDistance=newDistance;};
+    
+private:
+    int m_movementPlanDistance;
+    int m_damage;
+    int m_food;
+    int m_damageSound;
+    int m_deadSound;
+};
+
+// ------------------ SALMONELLA ACTOR -------------------- //
+class Salmonella : public Bacteria
+{
+public:
+    Salmonella(int imageID, double startX, double startY, StudentWorld* world, int hitPoints, int damage, int damageSound, int deadSound) : Bacteria (imageID, startX, startY, world, hitPoints, damage, damageSound, deadSound) {};
+    virtual void bacteriaMove();
+    // salmonella will check movement plan and determine potential movement
+    
+    // Bacteria(int imageID, double startX, double startY, StudentWorld* world, int hitPoints, int damage, int damageSound, int deadSound)
+};
+
+// ------------------ REGULAR SALMONELLA ACTOR ---------- //
+class RegularSalmonella : public Salmonella
+{
+public:
+    // constructor
+    RegularSalmonella(double startX, double startY, StudentWorld* world) : Salmonella(IID_SALMONELLA, startX, startY, world, 4, 1, SOUND_SALMONELLA_HURT, SOUND_SALMONELLA_DIE) {};
+    
+    virtual void addSelf(int x, int y);
+    
+};
+
+// ------------------- AGGRESSIVE SALMONELLA ACTOR -------- //
+class AggressiveSalmonella : public Salmonella
+{
+public:
+    AggressiveSalmonella(double startX, double startY, StudentWorld* world) : Salmonella(IID_SALMONELLA, startX, startY, world, 10, 2, SOUND_SALMONELLA_HURT, SOUND_SALMONELLA_DIE) {};
+    
+    //virtual void firstLookForSocrates(); // need to redefine
+    
+    virtual void addSelf(int x, int y);
+    
+};
+
+// -------------------- ECOLI ACTOR ---------------------- //
+class Ecoli : public Bacteria
+{
+public:
+    Ecoli(double startX, double startY, StudentWorld* world) : Bacteria (IID_ECOLI, startX, startY, world, 5, 4, SOUND_ECOLI_HURT, SOUND_ECOLI_DIE) {};
+
+    virtual void bacteriaMove() {return;}; // ecoli will only look for socrates
+    
+    virtual void addSelf(int x, int y);
 };
 
 #endif // ACTOR_H_
