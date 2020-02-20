@@ -249,3 +249,27 @@ void StudentWorld::updateDisplayText()
     
     setGameStatText(oss.str());
 }
+
+ // --------- DAMAGE ALL DAMAGEABLE ACTORS -------- //
+void StudentWorld::damageActors(int x, int y, int damage, bool& flag)
+{
+    list<Actor*>::iterator it;
+    it = m_actors.begin();
+    while(it != m_actors.end())
+    {
+        // check for overlap with damageable object
+        if((*it)->overlapLocation(x, y) && (*it)->isDamageable())
+        {
+            //cerr << "other x is " << x << " my x is " << (*it)->getX();
+            int afterDamage = (*it)->getHitPoints() - damage; // find new damage
+            (*it)->setHitPoints(afterDamage); // set new damage
+            if(afterDamage<=0) (*it)->setAlive(false); // check if other dead
+            
+            // change flag to true if used
+            flag=true;
+            
+            return; // only kill one thing 
+        }
+        it++;
+    }
+}

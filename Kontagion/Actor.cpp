@@ -23,7 +23,21 @@ bool Actor::overlap(Actor& other)
     dist = sqrt(dist);
     
     // if less than 2*sprite distance
-    if(dist < 2*SPRITE_RADIUS) return true;
+    if(dist <= 2*SPRITE_RADIUS) return true;
+    return false;
+}
+
+bool Actor::overlapLocation(int x, int y)
+{
+    // find distance
+    int x_dis = getX() - x;
+    int y_dis = getY() - y;
+    double dist = pow(x_dis,2) + pow(y_dis, 2);
+    dist = sqrt(dist);
+    
+    // if less than 2*sprite distance
+    if(dist <= 2*SPRITE_RADIUS) return true;
+    
     return false;
 }
 
@@ -174,25 +188,15 @@ void ProjectileActor::doSomething()
     // check if alive, if not => return
     if(!isAlive()) return;
     
-    // moveForward(SPRITE_RADIUS*2);
+    // damage all damageable actors
+    bool hit = false;
+    getMyWorld()->damageActors(getX(), getY(), m_damage, hit);
     
-    // create iterator over this world's other actos
-    list<Actor*>::iterator it;
-    it = getMyWorld()->getActorsBegin();
-
-    // check for overlap with a damageable object
-    while(it != getMyWorld()->getActorsEnd())
+    if(hit) // if hit something
     {
-        // if overlap, damage by m_damage
-        if( this->overlap(**it) && (*it)->isDamageable())
-        {
-            int afterDamage = (*it)->getHitPoints() - m_damage; // find new damage
-            (*it)->setHitPoints(afterDamage); // set new damage
-            if(afterDamage<=0) (*it)->setAlive(false); // check if other dead
-            setAlive(false); // set self to not alive
-            return; // only check for overlap with one object
-        }
-        it++;
+        //cerr << "here" << endl;
+        setAlive(false); // set self to not alive
+        return; // only check for overlap with one object
     }
     
     // move forward in current direction by SPRITE_RADIUS*2 pixels

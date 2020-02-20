@@ -30,14 +30,17 @@ public:
     
     // check for overlap (must be overridden for bacteria)
     bool overlap(Actor& other);
+    bool overlapLocation(int x, int y);
     
     // check if can overlap in init (set default to false)
     virtual bool canOverlapPlace() {return false; };
 
-    // each actor must be able to tell if they are destructible and what they can block
+    // each actor must be able to tell if they are destructible / can destruct and what they can block
     virtual bool isDamageable() = 0;
+    virtual bool canDamage() = 0;
     virtual bool canBlockBacteria() = 0;
     virtual bool canBlockProjectiles() = 0;
+    
     
 private:
     bool m_alive;
@@ -53,10 +56,11 @@ public:
     virtual void doSomething();
     void movePerimeter(double& x, double& y);
     
-    // Socrates is destructible and cannot block
-    bool isDamageable() {return false;};
-    bool canBlockBacteria() {return false;};
-    bool canBlockProjectiles() {return false;};
+    // Socrates is destructible and cannot block or damage
+    virtual bool isDamageable() {return false;};
+    virtual bool canBlockBacteria() {return false;};
+    virtual bool canBlockProjectiles() {return false;};
+    virtual bool canDamage() {return false;};
     
     // getters and setters for flame charges
     int getFlameCharges() {return m_flameCharges;};
@@ -78,13 +82,16 @@ class PassiveActor : public Actor
 public:
     PassiveActor(int imageID, double startX, double startY, int dir, int depth, StudentWorld* world, int hitPoints) : Actor (imageID, startX, startY, dir, depth, world, hitPoints) {};
     virtual void doSomething() {return;};
+    
+    // dirt cannot do damage
+    virtual bool canDamage() {return false;};
 };
 
 // ------- DIRT CLASS ------------ //
 class Dirt : public PassiveActor
 {
 public:
-    Dirt(double startX, double startY, StudentWorld* world) : PassiveActor(IID_DIRT, startX, startY, 90, 1, world, 1) {};
+    Dirt(double startX, double startY, StudentWorld* world) : PassiveActor(IID_DIRT, startX, startY, 0, 1, world, 1) {};
     
     virtual bool isDamageable() {return true;};
     virtual bool canBlockBacteria() {return true;};
@@ -115,10 +122,12 @@ public:
     virtual void doSomething();
     // will be the same for both types, only difference is m_pixels and m_damage
     
-    // projectile actors are not destructible and cannot block
+    // projectile actors are not destructible and cannot block but can damage
     virtual bool isDamageable() {return false;};
+    virtual bool canDamage() {return true;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
+    
     
 private:
     int m_pixels; // set m_pixels to limit at beginning, decrement with every tick
@@ -152,8 +161,9 @@ public:
     virtual void doSomething();
     virtual void uniqueEffect()=0; // each type has a different unique effect
     
-    // extra actors can be damaged and cannot block
+    // extra actors can be damaged and cannot block or damage
     virtual bool isDamageable() {return true;};
+    virtual bool canDamage() {return false;};
     virtual bool canBlockBacteria() {return false;};
     virtual bool canBlockProjectiles() {return false;};
     
