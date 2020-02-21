@@ -264,13 +264,15 @@ void StudentWorld::updateDisplayText()
     oss << "Level: " << getLevel();
     oss << setw(10);
     
-    oss << "health: " << getSocrates()->getHitPoints();
+    oss << "health: " << m_socrates->getHitPoints();
     oss << setw(10);
     
-    oss << "Sprays: " << getSocrates()->getSprayCharges();
+    oss << "Sprays: " << m_socrates->getSprayCharges();
     oss << setw(10);
     
-    oss << "Flames: " << getSocrates()->getFlameCharges() << endl;
+    oss << "Flames: " << m_socrates->getFlameCharges() << endl;
+    
+    oss << "Bacteria: " << m_bacteria << endl;
     
     setGameStatText(oss.str());
 }
@@ -361,15 +363,32 @@ bool StudentWorld::findFood(int x, int y, int& dir)
             if(dist < minDistance)
             {
                 minDistance = dist;
-                cerr << "the food is at " << (*it)->getX() << " , " << (*it)->getY() << endl;
                 dir = findDirection(x, y, (*it)->getX(), (*it)->getY());
-                cerr << "i think the direction is at " << dir << endl;
             }
         }
         it++;
     }
     
     return minDistance < 128;
+}
+
+// ----------- LOOK FOR SOCRATES -------------------------- //
+bool StudentWorld::findSocrates(int x, int y, int r, int& dir)
+{
+    int x_dist = x-m_socrates->getX();
+    int y_dist = y-m_socrates->getY();
+    
+    double dist = pow(x_dist, 2) + pow(y_dist, 2);
+    dist = sqrt(dist);
+    
+    // if within range
+    if(dist < r)
+    {
+        dir = findDirection(x, y, m_socrates->getX(), m_socrates->getY());
+        return true;
+    }
+    
+    return false;
 }
 
 // ----------- FIND DIRECTION BETWEEN TWO LOCATIONS ------- //

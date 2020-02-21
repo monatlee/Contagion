@@ -270,7 +270,7 @@ public:
     virtual void addSelf(int x, int y)=0;
     
     // only aggressive salmonella will look for socrates
-    virtual void firstLookForSocrates() {return;};
+    virtual void firstLookForSocrates(bool& flag) { }; // default do nothing
     
     // unique movement plan
     virtual void bacteriaMove() = 0;
@@ -318,7 +318,7 @@ class AggressiveSalmonella : public Salmonella
 public:
     AggressiveSalmonella(double startX, double startY, StudentWorld* world) : Salmonella(IID_SALMONELLA, startX, startY, world, 10, 2, SOUND_SALMONELLA_HURT, SOUND_SALMONELLA_DIE) {};
     
-    //virtual void firstLookForSocrates(); // need to redefine
+    virtual void firstLookForSocrates(bool& flag); // need to redefine
     
     virtual void addSelf(int x, int y);
     
@@ -330,7 +330,7 @@ class Ecoli : public Bacteria
 public:
     Ecoli(double startX, double startY, StudentWorld* world) : Bacteria (IID_ECOLI, startX, startY, world, 5, 4, SOUND_ECOLI_HURT, SOUND_ECOLI_DIE) {};
 
-    virtual void bacteriaMove() {return;}; // ecoli will only look for socrates
+    virtual void bacteriaMove(); // ecoli will only look for socrates
     
     virtual void addSelf(int x, int y);
 };

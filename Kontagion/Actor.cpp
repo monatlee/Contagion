@@ -315,7 +315,7 @@ void Pit::doSomething()
     if(chance==1)
     {
         // choose a bacteria to generate
-        int bact = 1; //randInt(1,3);
+        int bact = randInt(1,3);
 
         switch(bact)
         {
@@ -367,8 +367,9 @@ void Bacteria::doSomething()
     // if dead, immediately return
     if(!isAlive()) return;
     
+    bool flag = true;
     // aggressive salmonella will look for socrates
-    //firstLookForSocrates();
+    firstLookForSocrates(flag);
     
     // check for overlap with socrates
     if(overlapActor(*getMyWorld()->getSocrates()))
@@ -391,6 +392,7 @@ void Bacteria::doSomething()
         
         // create self
         addSelf(new_x, new_y);
+        getMyWorld()->incBacteria();
         
         // reset food count
         m_food=0;
@@ -407,7 +409,8 @@ void Bacteria::doSomething()
     }
     
     // salmonella and ecoli have different movement patterns
-    bacteriaMove();
+    if(flag) bacteriaMove();
+    else return;
 }
 
 void Bacteria::takeDamage(int damage)
@@ -420,11 +423,12 @@ void Bacteria::takeDamage(int damage)
         getMyWorld()->playSound(m_damageSound);
     }
     
-    else // he dead
+    else if (isAlive())// he dead
     {
         setAlive(false);
         getMyWorld()->playSound(m_deadSound);
         getMyWorld()->increaseScore(100);
+        getMyWorld()->decBacteria();
         
         // 50% chance bacteria becomes food
         int food = randInt(0,1);
@@ -442,7 +446,6 @@ void Salmonella::bacteriaMove()
     
     if(getMovement()>0) // keep moving in same direction
     {
-        cerr << "trying to move" << endl;
         setMovement(getMovement()-1);
         
         // find position 3 units forward
@@ -522,9 +525,61 @@ void AggressiveSalmonella::addSelf(int x, int y)
 {
     getMyWorld()->addActor(new AggressiveSalmonella(getX(), getY(), getMyWorld()));
 }
+void AggressiveSalmonella::firstLookForSocrates(bool& flag)
+{
+    Direction dir;
+    // if socrates within 72
+    if(getMyWorld()->findSocrates(getX(), getY(), 72, dir))
+    {
+        // try to move towards
+        setDirection(dir);
+        
+        double dx, dy;
+        
+        // find position 3 units forward
+        getPositionInThisDirection(getDirection(), 3, dx, dy);
+        
+        // check blockage
+        bool blocked = getMyWorld()->isBacteriaBlocked(dx,dy );
+        
+        if(!blocked) moveTo(dx, dy);
+        
+        flag = false;
+    }
+}
 
 // --------- E COLI --------------- //
 void Ecoli::addSelf(int x, int y)
 {
     getMyWorld()->addActor(new Ecoli(getX(), getY(), getMyWorld()));
+}
+
+void Ecoli::bacteriaMove()
+{
+    Direction dir;
+    // if socrates within 72
+    if(getMyWorld()->findSocrates(getX(), getY(), 256, dir))
+    {
+        // try to move towards
+        setDirection(dir);
+        
+        double dx, dy;
+        
+        for(int i = 0; i < 10; i++)
+        {
+            // find position 3 units forward
+            getPositionInThisDirection(getDirection(), 3, dx, dy);
+            
+            // check blockage
+            bool blocked = getMyWorld()->isBacteriaBlocked(dx,dy );
+            
+            if(!blocked)
+            {
+                moveTo(dx, dy);
+                return;
+            }
+            
+            setDirection(dir+=10);
+        }
+    }
 }

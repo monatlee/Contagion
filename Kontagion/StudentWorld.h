@@ -47,12 +47,16 @@ public:
     // getter for Socrates
     Socrates* getSocrates() {return m_socrates;};
     
-    // decrementers for pits and bacteria
+    // decrementers and incrementrs for pits and bacteria
     void decPits() {m_pits--;};
     void decBacteria() {m_bacteria--;};
+    void incBacteria() {m_bacteria++;};
     
     // try to find the nearest food to a location
     bool findFood(int x, int y, int& dir);
+    
+    // try to find Socrates within a radius
+    bool findSocrates(int x, int y, int r, int& dir);
     
     // find direction between two locations
     int findDirection(int fx, int fy, int sx, int sy);
