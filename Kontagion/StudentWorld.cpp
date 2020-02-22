@@ -272,8 +272,6 @@ void StudentWorld::updateDisplayText()
     
     oss << "Flames: " << m_socrates->getFlameCharges() << endl;
     
-    oss << "Bacteria: " << m_bacteria << endl;
-    
     setGameStatText(oss.str());
 }
 
@@ -395,4 +393,27 @@ bool StudentWorld::findSocrates(int x, int y, int r, int& dir)
 int StudentWorld::findDirection(int fx, int fy, int sx, int sy)
 {
     return 180+atan2(fy-sy, fx - sx)*180/3.14159265;
+}
+
+// ------------ SOCRATES-SPECIFIC FUNCTIONS -------------- //
+
+bool StudentWorld::overlapSocrates(Actor* other)
+{
+    return m_socrates->overlapActor(*other);
+}
+
+void StudentWorld::healSocrates()
+{
+    m_socrates->setHitPoints(100);
+}
+
+void StudentWorld::flameSocrates()
+{
+    int newFlames = m_socrates->getFlameCharges() + 5;
+    m_socrates->setFlameCharges(newFlames);
+}
+
+void StudentWorld::hurtSocrates(int damage)
+{
+    m_socrates->takeDamage(damage);
 }

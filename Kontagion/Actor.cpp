@@ -74,6 +74,7 @@ void Socrates::takeDamage(int damage)
     {
         setAlive(false);
         getMyWorld()->playSound(SOUND_PLAYER_DIE);
+        getMyWorld()->decLives();
     }
 }
 
@@ -249,7 +250,8 @@ void ExtraActor::doSomething()
     if(!isAlive()) return;
     
     // check for overlap with socrates
-    if( this->overlapActor(*getMyWorld()->getSocrates()))
+    //if( this->overlapActor(*getMyWorld()->getSocrates()))
+    if(getMyWorld()->overlapSocrates(this))
     {
         // update points
         getMyWorld()->increaseScore(m_scorePoints);
@@ -275,15 +277,14 @@ void ExtraActor::doSomething()
 void RestoreHealthGoodie::uniqueEffect()
 {
     // restore Socrates health to full
-    getMyWorld()->getSocrates()->setHitPoints(100);
+    getMyWorld()->healSocrates();
 }
 
 // ------- FLAME THROWER GOODIE ACTOR --------- //
 void FlameThrowerGoodie::uniqueEffect()
 {
     // add 5 flame thrower charges to arsenal
-    int newFlames = getMyWorld()->getSocrates()->getFlameCharges() + 5;
-    getMyWorld()->getSocrates()->setFlameCharges(newFlames);
+    getMyWorld()->flameSocrates();
 }
 
 // ------- EXTRA LIFE GOODIE ACTOR --------- //
@@ -297,7 +298,7 @@ void ExtraLifeGoodie::uniqueEffect()
 void Fungus::uniqueEffect()
 {
     // give Socrates 5 points of damage
-    getMyWorld()->getSocrates()->takeDamage(5);
+    getMyWorld()->hurtSocrates(5);
 }
 
 // ************* PIT ACTOR ***************** //
@@ -372,9 +373,10 @@ void Bacteria::doSomething()
     firstLookForSocrates(flag);
     
     // check for overlap with socrates
-    if(overlapActor(*getMyWorld()->getSocrates()))
+    //if(overlapActor(*getMyWorld()->getSocrates()))
+    if(getMyWorld()->overlapSocrates(this))
     {
-        getMyWorld()->getSocrates()->takeDamage(m_damage);
+        getMyWorld()->hurtSocrates(m_damage);
     }
     
     // eaten 3 pieces of food since last divided or was born

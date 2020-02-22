@@ -38,7 +38,6 @@ public:
     // each actor must be able to tell if they are destructible / can destruct and what they can block
     virtual bool isDamageable() = 0;
     virtual bool canBlockBacteria() = 0;
-    virtual bool canBlockProjectiles() = 0;
     
     // check if actor can be eaten (default is false)
     virtual bool canEat() {return false;};
@@ -60,12 +59,10 @@ class Socrates : public Actor
 public:
     Socrates(StudentWorld* world);
     virtual void doSomething();
-    void movePerimeter(double& x, double& y);
     
     // Socrates is destructible and cannot block or damage
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canBlockProjectiles() {return false;};
     
     // getters and setters for flame charges
     int getFlameCharges() {return m_flameCharges;};
@@ -82,6 +79,8 @@ private:
     int m_flameCharges;
     int m_positionalAngle;
     bool m_justSprayed;
+    
+    void movePerimeter(double& x, double& y);
 };
 
 // *************** PASSIVE ACTOR BASE CLASS FOR DIRT AND FOOD **************** //
@@ -100,7 +99,6 @@ public:
     
     virtual bool isDamageable() {return true;};
     virtual bool canBlockBacteria() {return true;};
-    virtual bool canBlockProjectiles() {return true;};
     virtual bool canOverlapPlace() {return true;};
     
     //redefine takeDamage
@@ -115,7 +113,6 @@ public:
     
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canBlockProjectiles() {return false;};
     virtual bool canOverlapPlace() {return false;};
     
     virtual bool canEat() {return true;};
@@ -135,7 +132,6 @@ public:
     // projectile actors are not destructible and cannot block but can damage
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canBlockProjectiles() {return false;};
     
 private:
     int m_pixels; // set m_pixels to limit at beginning, decrement with every tick
@@ -167,17 +163,18 @@ public:
     ExtraActor(int imageID, double startX, double startY, StudentWorld* world, bool goodie, int scorePoints);
     
     virtual void doSomething();
-    virtual void uniqueEffect()=0; // each type has a different unique effect
     
     // extra actors can be damaged and cannot block or damage
     virtual bool isDamageable() {return true;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canBlockProjectiles() {return false;};
     
 private:
     int m_lifetime; // track own lifetime
     bool m_goodie; // track if the actor is beneficial or harmful
     int m_scorePoints; // track how the object impacts the score
+    
+    virtual void uniqueEffect()=0; // each type has a different unique effect
+
 };
 
 // -------------------- RESTORE HEALTH GOODIE ACTOR ---------------------- //
@@ -189,6 +186,7 @@ public:
     // m_goodie is true
     RestoreHealthGoodie(double startX, double startY, StudentWorld* world) : ExtraActor(IID_RESTORE_HEALTH_GOODIE, startX, startY, world, true, 250) {};
     
+private:
     // uniqueEffect is to restore Socrates health to full
     virtual void uniqueEffect();
 };
@@ -202,6 +200,7 @@ public:
     // m_goodie is true
     FlameThrowerGoodie(double startX, double startY, StudentWorld* world) : ExtraActor(IID_FLAME_THROWER_GOODIE, startX, startY, world, true, 300) {};
     
+private:
     // uniqueEffect is to add 5 flame thrower charges to arsenal
     virtual void uniqueEffect();
 };
@@ -215,6 +214,7 @@ public:
     // m_goodie is true
     ExtraLifeGoodie(double startX, double startY, StudentWorld* world) : ExtraActor(IID_EXTRA_LIFE_GOODIE, startX, startY, world, true, 500) {};
     
+private:
     // uniqueEffect is to give player an extra life
     virtual void uniqueEffect();
 };
@@ -228,6 +228,7 @@ public:
     // m_goodie is FALSE
     Fungus(double startX, double startY, StudentWorld* world) : ExtraActor(IID_FUNGUS, startX, startY, world, false, -50) {};
     
+private:
     // uniqueEffect is to tell Socrates he has received 20 points of damage
     virtual void uniqueEffect();
 };
@@ -244,7 +245,6 @@ public:
     
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canBlockProjectiles() {return false;};
     virtual bool canOverlapPlace() {return false;};
     
 private:
@@ -263,17 +263,8 @@ public:
     
     virtual bool isDamageable() {return true;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canBlockProjectiles() {return false;};
     virtual bool canOverlapPlace() {return false;};
     
-    // add copy of self to world
-    virtual void addSelf(int x, int y)=0;
-    
-    // only aggressive salmonella will look for socrates
-    virtual void firstLookForSocrates(bool& flag) { }; // default do nothing
-    
-    // unique movement plan
-    virtual void bacteriaMove() = 0;
     
     // take damage
     virtual void takeDamage(int damage);
@@ -288,6 +279,14 @@ private:
     int m_food;
     int m_damageSound;
     int m_deadSound;
+    
+    virtual void bacteriaMove() = 0;    // unique movement plan
+
+    // add copy of self to world
+    virtual void addSelf(int x, int y)=0;
+    
+    // only aggressive salmonella will look for socrates
+    virtual void firstLookForSocrates(bool& flag) { }; // default do nothing
 };
 
 // ------------------ SALMONELLA ACTOR -------------------- //
@@ -295,6 +294,8 @@ class Salmonella : public Bacteria
 {
 public:
     Salmonella(int imageID, double startX, double startY, StudentWorld* world, int hitPoints, int damage, int damageSound, int deadSound) : Bacteria (imageID, startX, startY, world, hitPoints, damage, damageSound, deadSound) {};
+    
+private:
     virtual void bacteriaMove();
     // salmonella will check movement plan and determine potential movement
     
@@ -308,6 +309,7 @@ public:
     // constructor
     RegularSalmonella(double startX, double startY, StudentWorld* world) : Salmonella(IID_SALMONELLA, startX, startY, world, 4, 1, SOUND_SALMONELLA_HURT, SOUND_SALMONELLA_DIE) {};
     
+private:
     virtual void addSelf(int x, int y);
     
 };
@@ -318,6 +320,7 @@ class AggressiveSalmonella : public Salmonella
 public:
     AggressiveSalmonella(double startX, double startY, StudentWorld* world) : Salmonella(IID_SALMONELLA, startX, startY, world, 10, 2, SOUND_SALMONELLA_HURT, SOUND_SALMONELLA_DIE) {};
     
+private:
     virtual void firstLookForSocrates(bool& flag); // need to redefine
     
     virtual void addSelf(int x, int y);
@@ -330,6 +333,7 @@ class Ecoli : public Bacteria
 public:
     Ecoli(double startX, double startY, StudentWorld* world) : Bacteria (IID_ECOLI, startX, startY, world, 5, 4, SOUND_ECOLI_HURT, SOUND_ECOLI_DIE) {};
 
+private:
     virtual void bacteriaMove(); // ecoli will only look for socrates
     
     virtual void addSelf(int x, int y);
