@@ -250,7 +250,6 @@ void ExtraActor::doSomething()
     if(!isAlive()) return;
     
     // check for overlap with socrates
-    //if( this->overlapActor(*getMyWorld()->getSocrates()))
     if(getMyWorld()->overlapSocrates(this))
     {
         // update points
@@ -373,7 +372,6 @@ void Bacteria::doSomething()
     firstLookForSocrates(flag);
     
     // check for overlap with socrates
-    //if(overlapActor(*getMyWorld()->getSocrates()))
     if(getMyWorld()->overlapSocrates(this))
     {
         getMyWorld()->hurtSocrates(m_damage);
@@ -519,13 +517,13 @@ void Salmonella::bacteriaMove()
 // --------- REGULAR SALMONELLA ------------------ //
 void RegularSalmonella::addSelf(int x, int y)
 {
-    getMyWorld()->addActor(new RegularSalmonella(getX(), getY(), getMyWorld()));
+    getMyWorld()->addActor(new RegularSalmonella(x, y, getMyWorld()));
 }
 
 // --------- AGGRESSIVE SALMONELLA --------------- //
 void AggressiveSalmonella::addSelf(int x, int y)
 {
-    getMyWorld()->addActor(new AggressiveSalmonella(getX(), getY(), getMyWorld()));
+    getMyWorld()->addActor(new AggressiveSalmonella(x,y, getMyWorld()));
 }
 void AggressiveSalmonella::firstLookForSocrates(bool& flag)
 {
@@ -553,7 +551,7 @@ void AggressiveSalmonella::firstLookForSocrates(bool& flag)
 // --------- E COLI --------------- //
 void Ecoli::addSelf(int x, int y)
 {
-    getMyWorld()->addActor(new Ecoli(getX(), getY(), getMyWorld()));
+    getMyWorld()->addActor(new Ecoli(x, y, getMyWorld()));
 }
 
 void Ecoli::bacteriaMove()

@@ -28,14 +28,14 @@ public:
     int getHitPoints() {return m_hitPoints;};
     void setHitPoints(int newPoints) {m_hitPoints = newPoints;};
     
-    // check for overlap (must be overridden for bacteria)
+    // check for overlap both with another actor and a given location 
     bool overlapActor(Actor& other);
     bool overlapLocation(int x, int y);
     
     // check if can overlap in init (set default to false)
     virtual bool canOverlapPlace() {return false; };
 
-    // each actor must be able to tell if they are destructible / can destruct and what they can block
+    // each actor must be able to tell if they are destructible by projectile / can destruct and what they can block
     virtual bool isDamageable() = 0;
     virtual bool canBlockBacteria() = 0;
     
@@ -60,7 +60,7 @@ public:
     Socrates(StudentWorld* world);
     virtual void doSomething();
     
-    // Socrates is destructible and cannot block or damage
+    // Socrates is not damageable by projectile and cannot block bacteria
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
     
@@ -113,7 +113,6 @@ public:
     
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canOverlapPlace() {return false;};
     
     virtual bool canEat() {return true;};
 };
@@ -245,7 +244,6 @@ public:
     
     virtual bool isDamageable() {return false;};
     virtual bool canBlockBacteria() {return false;};
-    virtual bool canOverlapPlace() {return false;};
     
 private:
     int m_rSalmonella;
@@ -262,8 +260,7 @@ public:
     virtual void doSomething();
     
     virtual bool isDamageable() {return true;};
-    virtual bool canBlockBacteria() {return false;};
-    virtual bool canOverlapPlace() {return false;};
+    virtual bool canBlockBacteria() {return false;};\
     
     
     // take damage

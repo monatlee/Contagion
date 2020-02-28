@@ -149,7 +149,7 @@ int StudentWorld::move()
             if(!m_socrates->isAlive()) return GWSTATUS_PLAYER_DIED;
             
             // if killed all bacteria and pits are done, move on to next level
-            if(m_bacteria==0 & m_pits==0) return GWSTATUS_FINISHED_LEVEL;
+            if(m_bacteria==0 && m_pits==0) return GWSTATUS_FINISHED_LEVEL;
         }
         it++;
     }
